@@ -1,70 +1,128 @@
 <!DOCTYPE html>
-let canvas = document.getElementById("canvas");
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cámara</title>
+
+<style>
+body{
+    margin:0;
+    background:#111;
+    color:white;
+    font-family:Arial;
+    text-align:center;
+}
+
+video{
+    width:100%;
+    height:80vh;
+    object-fit:cover;
+    background:black;
+}
+
+button{
+    padding:15px 25px;
+    margin:10px;
+    font-size:18px;
+    border:none;
+    border-radius:10px;
+    background:#00aaff;
+    color:white;
+}
+
+canvas{
+    display:none;
+}
+</style>
+</head>
+<body>
+
+<h2>¡Sacate una foto con nosotros!</h2>
+
+<video id="video" autoplay playsinline></video>
+<canvas id="canvas"></canvas>
+
+<br>
+
+<button id="switchBtn">Cambiar Cámara</button>
+<button id="photoBtn">Tomar Foto</button>
+
+<script>
+const video = document.getElementById("video");
+const canvas = document.getElementById("canvas");
+const switchBtn = document.getElementById("switchBtn");
+const photoBtn = document.getElementById("photoBtn");
+
 let currentStream;
 let usandoFrontal = false;
 
-const SCRIPT_URL = "https://script.google.com/u/1/home/projects/1kXFBr6HqcMgv-neaGTNR69M19QjIz6VR9dvoqf1UX6RE1zadsD5U5EJ4/edit";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwNYq3wx_L-xFTX9OGWZKaWrDUWolUcQXvAajLTQxnDA3WkYGyygYXOY5Xl2DRBE8Gv/exec";
 
-async function iniciarCamara() {
-
-    if(currentStream){
-        currentStream.getTracks().forEach(track => track.stop());
-    }
-
-    let constraints = {
-        video: {
-            facingMode: usandoFrontal ? "user" : "environment"
-        }
-    };
+async function iniciarCamara(){
 
     try{
+
+        if(currentStream){
+            currentStream.getTracks().forEach(track => track.stop());
+        }
+
+        const constraints = {
+            video:{
+                facingMode: usandoFrontal ? "user" : "environment"
+            },
+            audio:false
+        };
+
         currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+
         video.srcObject = currentStream;
-    }catch(err){
-        alert("No se pudo abrir la cámara");
-        console.log(err);
+
+    }catch(error){
+        console.error(error);
+        alert("Error al abrir la cámara");
     }
 }
 
-function cambiarCamara(){
+switchBtn.addEventListener("click", ()=>{
     usandoFrontal = !usandoFrontal;
     iniciarCamara();
-}
+});
 
-async function tomarFoto(){
-
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-
-    const ctx = canvas.getContext("2d");
-    ctx.drawImage(video, 0, 0);
-
-    const image = canvas.toDataURL("image/png");
+photoBtn.addEventListener("click", async ()=>{
 
     try{
 
-        const response = await fetch(SCRIPT_URL, {
-            method: "POST",
-            body: JSON.stringify({ image }),
-            headers: {
-                "Content-Type": "application/json"
-            }
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+
+        const ctx = canvas.getContext("2d");
+
+        ctx.drawImage(video,0,0,canvas.width,canvas.height);
+
+        const imageData = canvas.toDataURL("image/jpeg",0.9);
+
+        const response = await fetch(SCRIPT_URL,{
+            method:"POST",
+            body: JSON.stringify({
+                image:imageData
+            })
         });
 
         const data = await response.json();
 
         if(data.success){
-            alert("Foto guardada en Google Drive");
+            alert("Foto subida a Google Drive");
             console.log(data.url);
         }else{
-            alert("Error al guardar");
+            alert("No se pudo guardar la foto");
         }
 
-    }catch(err){
-        console.log(err);
+    }catch(error){
+        console.error(error);
         alert("Error enviando la foto");
     }
-}
+});
 
 iniciarCamara();
 </script>
