@@ -1,88 +1,80 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cámara QR</title>
+
 <style>
-body{
-    margin:0;
-    background:black;
-    text-align:center;
-    color:white;
-    font-family:Arial;
-}
+    body{
+        margin:0;
+        background:#111;
+        color:white;
+        font-family:Arial;
+        text-align:center;
+    }
 
-video, canvas{
-    width:100%;
-}
+    video{
+        width:100%;
+        height:90vh;
+        object-fit:cover;
+    }
 
-button{
-    padding:20px;
-    font-size:20px;
-    margin:20px;
-}
+    button{
+        padding:15px 25px;
+        margin:10px;
+        font-size:18px;
+        border:none;
+        border-radius:10px;
+        background:#00aaff;
+        color:white;
+    }
 </style>
 </head>
 <body>
 
-<h2>Sacar Foto</h2>
+<h2>Cámara del celular</h2>
 
 <video id="video" autoplay playsinline></video>
 
-<canvas id="canvas" style="display:none;"></canvas>
-
 <br>
 
-<button onclick="takePhoto()">Sacar Foto</button>
+<button onclick="cambiarCamara()">
+Cambiar Cámara
+</button>
 
 <script>
+let video = document.getElementById("video");
+let currentStream;
+let usandoFrontal = false;
 
-const video = document.getElementById("video");
-const canvas = document.getElementById("canvas");
+async function iniciarCamara() {
 
-navigator.mediaDevices.getUserMedia({
-    video:{
-        facingMode:"environment"
+    if(currentStream){
+        currentStream.getTracks().forEach(track => track.stop());
     }
-})
-.then(stream=>{
-    video.srcObject = stream;
-});
 
-function takePhoto(){
+    let constraints = {
+        video: {
+            facingMode: usandoFrontal ? "user" : "environment"
+        }
+    };
 
-    const context = canvas.getContext("2d");
-
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-
-    context.drawImage(video,0,0);
-
-    const image = canvas.toDataURL("image/jpeg");
-
-    uploadPhoto(image);
-}
-
-function uploadPhoto(image){
-
-    fetch("https://script.google.com/macros/s/AKfycbwNYq3wx_L-xFTX9OGWZKaWrDUWolUcQXvAajLTQxnDA3WkYGyygYXOY5Xl2DRBE8Gv/exec",{
-
-        method:"POST",
-
-        body:JSON.stringify({
-            image:image.split(",")[1]
-        })
-
-    })
-    .then(r=>r.text())
-    .then(data=>{
-        alert("Foto subida correctamente");
-    })
-    .catch(err=>{
-        alert("Error al subir");
+    try{
+        currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+        video.srcObject = currentStream;
+    }catch(err){
+        alert("No se pudo abrir la cámara");
         console.log(err);
-    });
+    }
 }
 
+function cambiarCamara(){
+    usandoFrontal = !usandoFrontal;
+    iniciarCamara();
+}
+
+iniciarCamara();
 </script>
 
 </body>
