@@ -38,7 +38,7 @@ canvas{
 </head>
 <body>
 
-<h2>¡Sacate una foto con nosotros!</h2>
+<h2>Cámara del celular</h2>
 
 <video id="video" autoplay playsinline></video>
 <canvas id="canvas"></canvas>
@@ -57,6 +57,7 @@ const photoBtn = document.getElementById("photoBtn");
 let currentStream;
 let usandoFrontal = false;
 
+// PEGA AQUÍ TU URL DE GOOGLE APPS SCRIPT
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwNYq3wx_L-xFTX9OGWZKaWrDUWolUcQXvAajLTQxnDA3WkYGyygYXOY5Xl2DRBE8Gv/exec";
 
 async function iniciarCamara(){
@@ -104,12 +105,17 @@ photoBtn.addEventListener("click", async ()=>{
 
         const response = await fetch(SCRIPT_URL,{
             method:"POST",
+            mode:"cors",
+            headers:{
+                "Content-Type":"text/plain"
+            },
             body: JSON.stringify({
                 image:imageData
             })
         });
 
-        const data = await response.json();
+        const text = await response.text();
+        const data = JSON.parse(text);
 
         if(data.success){
             alert("Foto subida a Google Drive");
