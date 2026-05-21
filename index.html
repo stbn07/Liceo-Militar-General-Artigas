@@ -1,52 +1,89 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cámara Celular</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body{
+    margin:0;
+    background:black;
+    text-align:center;
+    color:white;
+    font-family:Arial;
+}
 
-    <style>
-        body{
-            margin:0;
-            background:black;
-            color:white;
-            font-family:Arial;
-            text-align:center;
-        }
+video, canvas{
+    width:100%;
+}
 
-        h1{
-            padding:10px;
-        }
-
-        video{
-            width:100%;
-            height:auto;
-        }
-    </style>
+button{
+    padding:20px;
+    font-size:20px;
+    margin:20px;
+}
+</style>
 </head>
-
 <body>
 
-    <h1>Cámara del Celular</h1>
+<h2>Sacar Foto</h2>
 
-    <video id="video" autoplay playsinline></video>
+<video id="video" autoplay playsinline></video>
 
-    <script>
-        const video = document.getElementById("video");
+<canvas id="canvas" style="display:none;"></canvas>
 
-        navigator.mediaDevices.getUserMedia({
-            video: {
-                facingMode: "environment"
-            }
+<br>
+
+<button onclick="takePhoto()">Sacar Foto</button>
+
+<script>
+
+const video = document.getElementById("video");
+const canvas = document.getElementById("canvas");
+
+navigator.mediaDevices.getUserMedia({
+    video:{
+        facingMode:"environment"
+    }
+})
+.then(stream=>{
+    video.srcObject = stream;
+});
+
+function takePhoto(){
+
+    const context = canvas.getContext("2d");
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    context.drawImage(video,0,0);
+
+    const image = canvas.toDataURL("image/jpeg");
+
+    uploadPhoto(image);
+}
+
+function uploadPhoto(image){
+
+    fetch("PEGA_AQUI_TU_LINK_DE_APPS_SCRIPT",{
+
+        method:"POST",
+
+        body:JSON.stringify({
+            image:image.split(",")[1]
         })
-        .then((stream) => {
-            video.srcObject = stream;
-        })
-        .catch((err) => {
-            alert("No se pudo acceder a la cámara");
-            console.log(err);
-        });
-    </script>
+
+    })
+    .then(r=>r.text())
+    .then(data=>{
+        alert("Foto subida correctamente");
+    })
+    .catch(err=>{
+        alert("Error al subir");
+        console.log(err);
+    });
+}
+
+</script>
 
 </body>
 </html>
